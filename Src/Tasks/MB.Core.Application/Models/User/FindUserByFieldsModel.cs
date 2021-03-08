@@ -9,5 +9,6 @@ namespace MB.Core.Application.Models.User
     {
         [Required]
         public string UserNameOrEmail { get; set; }
+        public long? ExcludeUsersFromProjectId { get; set; }
     }
 }

@@ -56,7 +56,12 @@ namespace MB.Infrastructure.Services.Internal
 
             try
             {
-                var validUser = _userManager.Users.Where(user => user.UserName.Contains(model.UserNameOrEmail) || user.Email.Contains(model.UserNameOrEmail));
+                IQueryable<long> excludeUsers = null;
+                if (model.ExcludeUsersFromProjectId.HasValue)
+                {
+                    excludeUsers = _unitOfWork.Repository<UserProjects>().GetDbset().Where(e => e.ProjectId == model.ExcludeUsersFromProjectId.Value).Select(e => e.UserId).Distinct();
+                }
+                var validUser = _userManager.Users.Where(user => (excludeUsers == null || !excludeUsers.Any(exclude => exclude == user.UserId)) && (user.UserName.Contains(model.UserNameOrEmail) || user.Email.Contains(model.UserNameOrEmail)));
                 if (validUser == null)
                 {
                     throw new UserServiceException(UserRelatedErrorsConstants.USER_NOT_FOUND);
