@@ -2,9 +2,11 @@
 using MB.Core.Application.Models.Participation;
 using MB.Core.Domain.DbEntities;
 using MB.Infrastructure.Contexts;
+using MB.WebApi.Hubs.v1;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -23,18 +25,20 @@ namespace MB.Tests.ParticipationController
 
         private readonly ApplicationDbContext dbContext;
 
-        private readonly ILogger<Infrastructure.Services.Internal.ParticipationService> _logger;
+        private readonly ILogger<Infrastructure.Services.Internal.ParticipationService> _participationLogger;
+        private readonly ILogger<Infrastructure.Services.Internal.ProjectService> _projectLogger;
 
         private readonly UserManager<ApplicationUser> _userManager;
 
         private readonly Func<object, long, Task> testFunc;
 
-        public DeleteExistingParticipation(ITestOutputHelper helper, ApplicationDbContext context, UserManager<ApplicationUser> userManager, ILogger<Infrastructure.Services.Internal.ParticipationService> logger)
+        public DeleteExistingParticipation(ITestOutputHelper helper, ApplicationDbContext context, UserManager<ApplicationUser> userManager, ILogger<Infrastructure.Services.Internal.ParticipationService> participationLogger, ILogger<Infrastructure.Services.Internal.ProjectService> projectLogger)
         {
             _testOutputHelper = helper;
             dbContext = context;
             _userManager = userManager;
-            _logger = logger;
+            _participationLogger = participationLogger;
+            _projectLogger = projectLogger;
 
             testFunc = async (uid, statusCode) =>
             {
@@ -50,8 +54,10 @@ namespace MB.Tests.ParticipationController
                     uid = uid,
                 };
                 var participationServiceMock = new Mock<IParticipationService>();
-                participationServiceMock.Setup(service => service.DeleteExistingParticipation(It.IsAny<long>(), It.IsAny<DeleteParticipationModel>())).ReturnsAsync(new ParticipationResponseModel(null));
-                var participationController = new WebApi.Controllers.v1.ParticipationController(participationServiceMock.Object, _userManager);
+                var projectServiceMock = new Mock<IProjectService>();
+                var globalHubMock = new Mock<IHubContext<GlobalHub>>();
+                participationServiceMock.Setup(service => service.DeleteExistingParticipation(It.IsAny<long>(), It.IsAny<DeleteParticipationModel>())).ReturnsAsync(false);
+                var participationController = new WebApi.Controllers.v1.ParticipationController(participationServiceMock.Object, _userManager, globalHubMock.Object, projectServiceMock.Object);
 
                 // Mock up a case to bypass authen success
                 var controllerContext = new ControllerContext();
@@ -115,6 +121,7 @@ namespace MB.Tests.ParticipationController
                 var userProjectRepo = new Mock<IGenericRepository<UserProjects>>();
                 var projectRepo = new Mock<IGenericRepository<Project>>();
                 var unitOfWorkMock = new Mock<IUnitOfWork>();
+                var globalHubMock = new Mock<IHubContext<GlobalHub>>();
                 var transaction = await dbContext.Database.BeginTransactionAsync();
 
                 //Set up repos
@@ -128,8 +135,9 @@ namespace MB.Tests.ParticipationController
                 unitOfWorkMock.Setup(u => u.Entry(It.IsAny<UserProjects>())).Returns<EntityEntry<UserProjects>>(null);
 
                 // Create controller with mocked service
-                var participationService = new Infrastructure.Services.Internal.ParticipationService(unitOfWorkMock.Object, _userManager, (ILogger<Infrastructure.Services.Internal.ParticipationService>)_logger);
-                var participationController = new WebApi.Controllers.v1.ParticipationController(participationService, _userManager);
+                var participationService = new Infrastructure.Services.Internal.ParticipationService(unitOfWorkMock.Object, _userManager, _participationLogger);
+                var projectService = new Infrastructure.Services.Internal.ProjectService(unitOfWorkMock.Object, _userManager, _projectLogger);
+                var participationController = new WebApi.Controllers.v1.ParticipationController(participationService, _userManager, globalHubMock.Object, projectService);
 
                 // Mock up a case to pass the access token check when there is a uid field
                 var controllerContext = new ControllerContext();

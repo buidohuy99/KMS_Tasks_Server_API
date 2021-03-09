@@ -8,6 +8,6 @@ namespace MB.Core.Application.Interfaces
     {
         public Task<ParticipationResponseModel> AddNewParticipation(long createdByUserId, NewParticipationModel newParticipation);
         public Task<IGetAllParticipations_ResponseModel> GetAllParticipations(long queriedByUserId, GetAllParticipationsModel model);
-        public Task<object> DeleteExistingParticipation(long deletedByUserId, DeleteParticipationModel model);
+        public Task<bool> DeleteExistingParticipation(long deletedByUserId, DeleteParticipationModel model);
     }
 }

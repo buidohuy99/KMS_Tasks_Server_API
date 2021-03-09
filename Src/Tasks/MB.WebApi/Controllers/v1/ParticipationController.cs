@@ -16,6 +16,8 @@ using MB.Core.Domain.DbEntities;
 using Microsoft.AspNetCore.SignalR;
 using MB.WebApi.Hubs.v1;
 using MB.Core.Application.Interfaces.Misc;
+using MB.Core.Application.Models;
+using Microsoft.Extensions.Logging;
 
 namespace MB.WebApi.Controllers.v1
 {
@@ -24,10 +26,16 @@ namespace MB.WebApi.Controllers.v1
     public class ParticipationController : BaseController
     {
         private readonly IParticipationService _participationService;
+        private readonly IProjectService _projectService;
+        private readonly IHubContext<GlobalHub> _hubContext;
+        private readonly ILogger<ParticipationController> _logger;
 
-        public ParticipationController(IParticipationService participationService, UserManager<ApplicationUser> userManager) : base(userManager)
+        public ParticipationController(IParticipationService participationService, UserManager<ApplicationUser> userManager, IHubContext<GlobalHub> hubContext, IProjectService projectService, ILogger<ParticipationController> logger) : base(userManager)
         {
-            _participationService = participationService; 
+            _participationService = participationService;
+            _projectService = projectService;
+            _hubContext = hubContext;
+            _logger = logger;
         }
 
         [HttpPost("participation")]
@@ -54,6 +62,33 @@ namespace MB.WebApi.Controllers.v1
 
                 // Carry on with the business logic
                 ParticipationResponseModel addedParticipation = await _participationService.AddNewParticipation(uid.Value, newParticipation);
+
+                // We get updated list of participating users and send to people in the project detail page
+                long? findProject = null;
+                if (addedParticipation.ParticipatedProject != null) { 
+                    findProject = addedParticipation.ParticipatedProject.Id; 
+                }
+                GetAllParticipationsModel model = new GetAllParticipationsModel() {
+                    ProjectId = findProject,
+                };
+                GetAllParticipatingUsers_InProject_ResponseModel participatingUsers = (GetAllParticipatingUsers_InProject_ResponseModel)(await _participationService.GetAllParticipations(uid.Value, model));
+                if (findProject.HasValue && participatingUsers.Users != null)
+                {
+                    // send participants list to people in the project detail page
+                    await _hubContext.Clients.Group($"Project{findProject.Value}Group").SendAsync("project-participants-list-changed", participatingUsers);
+                    // send new projects list to people in the projects/index page
+                    foreach (var participant in participatingUsers.Users)
+                    {
+                        GetAllProjectsModel fetchAllProjects = new GetAllProjectsModel()
+                        {
+                            UserID = participant.UserDetail.Id,
+                        };
+                        var resulting = await _projectService.GetAllProjects(fetchAllProjects);
+
+                        await _hubContext.Clients.Group($"User{participant.UserDetail.Id}Group").SendAsync("projects-list-changed", new { projects = resulting.Projects });
+                    }
+                }
+                
                 return Ok(new HttpResponse<ParticipationResponseModel>(true, addedParticipation, message: "Successfully added participation"));
             }
             catch (Exception ex)
@@ -140,7 +175,36 @@ namespace MB.WebApi.Controllers.v1
 
                 // If passes all tests, then we submit it to the service layer
                 // Carry on with the business logic
-                await _participationService.DeleteExistingParticipation(uid.Value, model);
+                var deleteResult = await _participationService.DeleteExistingParticipation(uid.Value, model);
+
+                // We get updated list of participating users and send to people in the project detail page
+                long? findProject = null;
+                if (deleteResult == true)
+                {
+                    findProject = model.RemoveFromProjectId;
+                }
+                GetAllParticipationsModel getAllParticipationsModel = new GetAllParticipationsModel()
+                {
+                    ProjectId = findProject,
+                };
+                GetAllParticipatingUsers_InProject_ResponseModel participatingUsers = (GetAllParticipatingUsers_InProject_ResponseModel)(await _participationService.GetAllParticipations(uid.Value, getAllParticipationsModel));
+                if (findProject.HasValue && participatingUsers.Users != null)
+                {
+                    // send participants list to people in the project detail page
+                    await _hubContext.Clients.Group($"Project{findProject.Value}Group").SendAsync("project-participants-list-changed", participatingUsers);
+                    // send new projects list to people in the projects/index page
+                    foreach (var participant in participatingUsers.Users)
+                    {
+                        GetAllProjectsModel fetchAllProjects = new GetAllProjectsModel()
+                        {
+                            UserID = participant.UserDetail.Id,
+                        };
+                        var resulting = await _projectService.GetAllProjects(fetchAllProjects);
+
+                        await _hubContext.Clients.Group($"User{participant.UserDetail.Id}Group").SendAsync("projects-list-changed", new { projects = resulting.Projects });
+                    }
+                }
+
                 return Ok(new HttpResponse<object>(true, null, message: "Successfully deleted specified participation(s) of user"));
             }
             catch (Exception ex)
