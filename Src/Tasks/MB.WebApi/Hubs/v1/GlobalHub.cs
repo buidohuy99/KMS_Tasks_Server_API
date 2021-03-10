@@ -26,34 +26,6 @@ namespace MB.WebApi.Hubs.v1
             _userManager = userManager;
         }
 
-        private long? GetUserId(ClaimsPrincipal claimsManager)
-        {
-            if (claimsManager == null) return null;
-            if (!claimsManager.HasClaim(c => c.Type == "uid"))
-            {
-                throw new Exception("Token provided is invalid because there is no valid confidential claim");
-            }
-
-            // Extract uid from token
-            long uid;
-            try
-            {
-                uid = long.Parse(claimsManager.Claims.FirstOrDefault(c => c.Type == "uid").Value);
-            }
-            catch (Exception)
-            {
-                throw new Exception("Token provided is invalid because the value for the claim is invalid");
-            }
-
-            // Check uid valid
-            if (!_userManager.Users.Any(user => user.UserId == uid))
-            {
-                throw new Exception("Token provided is invalid because the value for the claim is invalid");
-            }
-
-            return uid;
-        }
-
         public override Task OnConnectedAsync()
         {
             _connectionManager.RegisterConnection(Context.ConnectionId);
@@ -66,10 +38,10 @@ namespace MB.WebApi.Hubs.v1
             return base.OnDisconnectedAsync(exception);
         }
 
-        public void Login(long uid)
+        public async void Login(long uid)
         {
             // Check validity of the request
-            Groups.AddToGroupAsync(Context.ConnectionId, $"User{uid}Group");
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"User{uid}Group");
            _connectionManager.AddConnectionToRoom(Context.ConnectionId, $"User{uid}Group");
         }
 
@@ -78,15 +50,15 @@ namespace MB.WebApi.Hubs.v1
             _connectionManager.ClearRoomsOfConnection(Context.ConnectionId);
         }
 
-        public void RegisterViewProject(long projectId)
+        public async void RegisterViewProject(long projectId)
         {
-            Groups.AddToGroupAsync(Context.ConnectionId, $"Project{projectId}Group");
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"Project{projectId}Group");
             _connectionManager.AddConnectionToRoom(Context.ConnectionId, $"Project{projectId}Group");
         }
 
-        public void RemoveFromViewingProject(long projectId)
+        public async void RemoveFromViewingProject(long projectId)
         {
-            Groups.RemoveFromGroupAsync(Context.ConnectionId, $"Project{projectId}Group");
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"Project{projectId}Group");
             _connectionManager.RemoveConnectionFromRoom(Context.ConnectionId, $"Project{projectId}Group");
         }
     }

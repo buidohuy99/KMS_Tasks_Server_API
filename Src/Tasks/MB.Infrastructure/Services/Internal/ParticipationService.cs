@@ -167,7 +167,7 @@ namespace MB.Infrastructure.Services.Internal
             }
         }
 
-        public async Task<object> DeleteExistingParticipation(long deletedByUserId, DeleteParticipationModel model)
+        public async Task<bool> DeleteExistingParticipation(long deletedByUserId, DeleteParticipationModel model)
         {
             if (model.RemoveProjectRoleId != null && model.RemoveProjectRoleId <= Enums.ProjectRoles.None)
             {
