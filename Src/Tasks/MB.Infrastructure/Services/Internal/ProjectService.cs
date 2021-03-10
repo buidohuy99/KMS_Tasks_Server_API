@@ -58,6 +58,17 @@ namespace MB.Infrastructure.Services.Internal
                         sb.AppendLine(parent.ToList().ToString());
                         throw new Exception(sb.ToString());
                     }
+
+                    var operatedParent = parent.ToList()[0];
+
+                    // Get if user have the authorization to change project info
+                    var getUserProject = from userProject in _unitOfWork.Repository<UserProjects>().GetDbset()
+                                         where userProject.UserId == validUser.UserId && userProject.ProjectId == operatedParent.Id
+                                         select userProject;
+                    if (getUserProject == null || getUserProject.Count() < 1)
+                    {
+                        throw new ProjectServiceException(ProjectRelatedErrorsConstants.ACCESS_TO_PROJECT_IS_FORBIDDEN);
+                    }
                 }
 
                 // Add project in first
@@ -337,6 +348,15 @@ namespace MB.Infrastructure.Services.Internal
                     if(newParentProject.Id == operatedProject.Id)
                     {
                         throw new ProjectServiceException(ProjectRelatedErrorsConstants.CANNOT_SET_PARENT_PROJECT_TOBE_ITSELF);
+                    }
+
+                    // Get if user have the authorization to change project info
+                    var checkUserProject = from userProject in _unitOfWork.Repository<UserProjects>().GetDbset()
+                                         where userProject.UserId == validUser.UserId && userProject.ProjectId == newParentProject.Id
+                                         select userProject;
+                    if (checkUserProject == null || checkUserProject.Count() < 1)
+                    {
+                        throw new ProjectServiceException(ProjectRelatedErrorsConstants.ACCESS_TO_PROJECT_IS_FORBIDDEN);
                     }
 
                     // Only  register change only if parentId is not sent together with removefromparent field (we ignore the change)

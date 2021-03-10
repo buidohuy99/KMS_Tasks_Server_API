@@ -58,6 +58,17 @@ namespace MB.Infrastructure.Services.Internal
                     throw new Exception(sb.ToString());
                 }
 
+                var realParent = parentProject.ToList()[0];
+
+                // Get if user have the authorization to change tag info (query the projects the user is participating)
+                var getUserProject = from userProject in _unitOfWork.Repository<UserProjects>().GetDbset()
+                                     where userProject.UserId == validUser.UserId && ((realParent.ParentId != null && userProject.ProjectId == realParent.ParentId) || userProject.ProjectId == realParent.Id)
+                                     select userProject;
+                if (getUserProject == null || getUserProject.Count() < 1)
+                {
+                    throw new TaskServiceException(TaskRelatedErrorsConstants.ACCESS_TO_TASK_IS_FORBIDDEN);
+                }
+
                 // Check if its parent task is valid
                 if (task.ParentId != null)
                 {
@@ -316,12 +327,12 @@ namespace MB.Infrastructure.Services.Internal
                     throw new Exception(sb.ToString());
                 }
 
-                Tasks operatedTask = result.ToList()[0];
+                Tasks operatedTask = result.Include(e => e.Project).ToList()[0];
 
                 // Query if the current user is associated with the project that the operated task is in???
                 var userIsAssociated = from userProjects in _unitOfWork.Repository<UserProjects>().GetDbset()
-                             where userProjects.UserId == validUser.UserId && operatedTask.ProjectId == userProjects.ProjectId
-                             select userProjects;
+                             where userProjects.UserId == validUser.UserId && ((operatedTask.Project.ParentId != null && userProjects.ProjectId == operatedTask.Project.ParentId) || userProjects.ProjectId == operatedTask.Project.Id)
+                                       select userProjects;
                 if (userIsAssociated == null || userIsAssociated.Count() < 1)
                 {
                     throw new TaskServiceException(TaskRelatedErrorsConstants.ACCESS_TO_TASK_IS_FORBIDDEN);
@@ -543,11 +554,11 @@ namespace MB.Infrastructure.Services.Internal
                     throw new Exception(sb.ToString());
                 }
 
-                Tasks operatedTask = result.ToList()[0];
+                Tasks operatedTask = result.Include(e => e.Project).ToList()[0];
 
                 // Get if user have the authorization to change tag info (query the projects the user is participating)
                 var getUserProject = from userProject in _unitOfWork.Repository<UserProjects>().GetDbset()
-                                     where userProject.UserId == validUser.UserId && userProject.ProjectId == operatedTask.ProjectId
+                                     where userProject.UserId == validUser.UserId && ((operatedTask.Project.ParentId != null && userProject.ProjectId == operatedTask.Project.ParentId) || userProject.ProjectId == operatedTask.Project.Id)
                                      select userProject;
                 if (getUserProject == null || getUserProject.Count() < 1)
                 {
