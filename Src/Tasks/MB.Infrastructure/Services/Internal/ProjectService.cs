@@ -92,22 +92,27 @@ namespace MB.Infrastructure.Services.Internal
                 }
 
                 // Add user project: project's relation to an owner
-                UserProjects relationToUser = new UserProjects()
+                List<ProjectRole> roles = null;
+                if (addedProject.ParentId == null)
                 {
-                    UserId = validUser.UserId,
-                    ProjectId = addedProject.Id,
-                    RoleId = Enums.ProjectRoles.Owner,
-                };
-                await _unitOfWork.Repository<UserProjects>().InsertAsync(relationToUser);
-                await _unitOfWork.SaveChangesAsync();
+                    UserProjects relationToUser = new UserProjects()
+                    {
+                        UserId = validUser.UserId,
+                        ProjectId = addedProject.Id,
+                        RoleId = Enums.ProjectRoles.Owner,
+                    };
+                    await _unitOfWork.Repository<UserProjects>().InsertAsync(relationToUser);
+                    await _unitOfWork.SaveChangesAsync();
 
-                List<ProjectRole> roles = new List<ProjectRole>();
-                var entry = _unitOfWork.Entry(relationToUser);
-                if (entry != null)
-                {
-                    await entry.Reference(e => e.ProjectRole).LoadAsync();
+                    roles = new List<ProjectRole>();
+
+                    var entry = _unitOfWork.Entry(relationToUser);
+                    if (entry != null)
+                    {
+                        await entry.Reference(e => e.ProjectRole).LoadAsync();
+                    }
+                    roles.Add(relationToUser.ProjectRole);
                 }
-                roles.Add(relationToUser.ProjectRole);
 
                 await transaction.CommitAsync();
 

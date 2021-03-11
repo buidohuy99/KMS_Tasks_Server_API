@@ -28,14 +28,12 @@ namespace MB.WebApi.Controllers.v1
         private readonly IParticipationService _participationService;
         private readonly IProjectService _projectService;
         private readonly IHubContext<GlobalHub> _hubContext;
-        private readonly ILogger<ParticipationController> _logger;
 
-        public ParticipationController(IParticipationService participationService, UserManager<ApplicationUser> userManager, IHubContext<GlobalHub> hubContext, IProjectService projectService, ILogger<ParticipationController> logger) : base(userManager)
+        public ParticipationController(IParticipationService participationService, UserManager<ApplicationUser> userManager, IHubContext<GlobalHub> hubContext, IProjectService projectService) : base(userManager)
         {
             _participationService = participationService;
             _projectService = projectService;
             _hubContext = hubContext;
-            _logger = logger;
         }
 
         [HttpPost("participation")]
@@ -192,17 +190,14 @@ namespace MB.WebApi.Controllers.v1
                 {
                     // send participants list to people in the project detail page
                     await _hubContext.Clients.Group($"Project{findProject.Value}Group").SendAsync("project-participants-list-changed", participatingUsers);
-                    // send new projects list to people in the projects/index page
-                    foreach (var participant in participatingUsers.Users)
+                    // send new projects list to the removed person
+                    GetAllProjectsModel fetchAllProjects = new GetAllProjectsModel()
                     {
-                        GetAllProjectsModel fetchAllProjects = new GetAllProjectsModel()
-                        {
-                            UserID = participant.UserDetail.Id,
-                        };
-                        var resulting = await _projectService.GetAllProjects(fetchAllProjects);
+                        UserID = model.RemoveUserId,
+                    };
+                    var resulting = await _projectService.GetAllProjects(fetchAllProjects);
 
-                        await _hubContext.Clients.Group($"User{participant.UserDetail.Id}Group").SendAsync("projects-list-changed", new { projects = resulting.Projects });
-                    }
+                    await _hubContext.Clients.Group($"User{model.RemoveUserId.Value}Group").SendAsync("projects-list-changed", new { projects = resulting.Projects });
                 }
 
                 return Ok(new HttpResponse<object>(true, null, message: "Successfully deleted specified participation(s) of user"));

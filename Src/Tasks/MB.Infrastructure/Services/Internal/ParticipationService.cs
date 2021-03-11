@@ -56,6 +56,10 @@ namespace MB.Infrastructure.Services.Internal
                 {
                     throw new ParticipationServiceException(ProjectRelatedErrorsConstants.PROJECT_NOT_FOUND);
                 }
+                if (validProject.ParentId != null)
+                {
+                    throw new ParticipationServiceException(ProjectParticipationRelatedErrorsConstants.CANNOT_CREATE_PARTICIPATION_FOR_PROJECT_WITH_PARENT);
+                }
 
                 // In the future, we will check if the user creating the participation have the rights to create one
                 // Preferably, we want only the owner, PM or leader to have the rights

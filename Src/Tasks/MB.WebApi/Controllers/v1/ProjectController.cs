@@ -28,14 +28,12 @@ namespace MB.WebApi.Controllers.v1
         private readonly IProjectService _projectService;
         private readonly IParticipationService _participationService;
         private readonly IHubContext<GlobalHub> _hubContext;
-        private readonly ILogger<ProjectController> _logger;
 
-        public ProjectController(IProjectService projectService, IParticipationService participationService, UserManager<ApplicationUser> userManager, IHubContext<GlobalHub> hubContext, ILogger<ProjectController> logger) : base(userManager)
+        public ProjectController(IProjectService projectService, IParticipationService participationService, UserManager<ApplicationUser> userManager, IHubContext<GlobalHub> hubContext) : base(userManager)
         {
             _projectService = projectService;
             _participationService = participationService;
             _hubContext = hubContext;
-            _logger = logger;
         }
 
         [HttpPost("project")]
@@ -76,7 +74,7 @@ namespace MB.WebApi.Controllers.v1
                     GetOneProjectModel model = new GetOneProjectModel()
                     {
                         ProjectId = addedProject.Parent.Id,
-                        UserId = addedProject.Parent.CreatedBy.Id,
+                        UserId = uid.Value,
                     };
                     ProjectResponseModel participatedProject = await _projectService.GetOneProject(model);
                     await _hubContext.Clients.Group($"Project{participatedProject.Id}Group").SendAsync("project-detail-changed", new { projectDetail = participatedProject });
@@ -95,7 +93,7 @@ namespace MB.WebApi.Controllers.v1
                     if(statusCode != null && statusCode.HasValue)
                     {
                         return StatusCode((int) statusCode.Value, new HttpResponse<object>(false, null, sb.ToString()));
-                    }              
+                    }
                 }
                 return StatusCode(500, new HttpResponse<Exception>(false, ex, "Server encountered an exception"));
             }

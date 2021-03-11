@@ -49,6 +49,7 @@ namespace MB.Core.Domain.Constants
         public const string CANNOT_CREATE_PARTICIPATION_WITH_NONE_AS_A_ROLE = "A participation must have one valid role to be created";
         public const string CANNOT_CREATE_PARTICIPATION_WITH_OWNER_AS_A_ROLE = "Owner role can only be given to the one who created the project";
         public const string CANNOT_RECREATE_AN_EXISTING_PARTICIPATION = "The participation you want to create already exist";
+        public const string CANNOT_CREATE_PARTICIPATION_FOR_PROJECT_WITH_PARENT = "The participation for this project cannot be created because its not a valid project for the action";
         // Delete participation errors
         public const string THERE_IS_NO_PARTICIPATION_WITH_A_NONE_ROLE = "There are no participation with none as a role";
         public const string PARTICIPATION_REMOVER_DONT_HAVE_THE_RIGHTS = "Remover of the participation don't have the rights to perform the action";
