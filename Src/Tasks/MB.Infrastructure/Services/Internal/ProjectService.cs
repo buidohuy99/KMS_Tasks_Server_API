@@ -249,7 +249,7 @@ namespace MB.Infrastructure.Services.Internal
                     foreach (var child in project.Children.OrderBy(e => e.Id).ToList())
                     {
                         var entryChildProject = _unitOfWork.Entry(child);
-                        await entry.Collection(e => e.ChildrenTasks).LoadAsync();
+                        await entryChildProject.Collection(e => e.ChildrenTasks).LoadAsync();
 
                         List<TaskResponseModel> childrenTasksOfChildProject = new List<TaskResponseModel>();
                         if (child.ChildrenTasks != null)
@@ -407,7 +407,7 @@ namespace MB.Infrastructure.Services.Internal
                 foreach (var child in operatedProject.Children.OrderBy(e => e.Id).ToList())
                 {
                     var entryChildProject = _unitOfWork.Entry(child);
-                    await entry.Collection(e => e.ChildrenTasks).LoadAsync();
+                    await entryChildProject.Collection(e => e.ChildrenTasks).LoadAsync();
 
                     List<TaskResponseModel> childrenTasksOfChildProject = new List<TaskResponseModel>();
                     if (child.ChildrenTasks != null)

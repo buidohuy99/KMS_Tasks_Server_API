@@ -287,6 +287,24 @@ namespace MB.WebApi.Controllers.v1
                 // If passes all tests, then we submit it to the service layer
                 // Carry on with the business logic
                 ProjectResponseModel participatedProject = await _projectService.SoftDeleteExistingProject(projectId, uid.Value);
+                //Notify list change for all users participating in the project
+                GetAllParticipationsModel GetParticipationsModel = new GetAllParticipationsModel()
+                {
+                    ProjectId = participatedProject.Id,
+                };
+                GetAllParticipatingUsers_InProject_ResponseModel participatingUsers = (GetAllParticipatingUsers_InProject_ResponseModel)(await _participationService.GetAllParticipations(uid.Value, GetParticipationsModel));
+                foreach (var participant in participatingUsers.Users)
+                {
+                    GetAllProjectsModel fetchAllProjects = new GetAllProjectsModel()
+                    {
+                        UserID = participant.UserDetail.Id,
+                    };
+                    var resulting = await _projectService.GetAllProjects(fetchAllProjects);
+
+                    await _hubContext.Clients.Group($"User{participant.UserDetail.Id}Group").SendAsync("projects-list-changed", new { projects = resulting.Projects });
+                }
+                //Notify people in details page
+                await _hubContext.Clients.Group($"Project{participatedProject.Id}Group").SendAsync("project-detail-changed", new { projectDetail = participatedProject });
                 return Ok(new HttpResponse<ProjectResponseModel>(true, participatedProject, message: "Successfully deleted specified project of user"));
             }
             catch (Exception ex)

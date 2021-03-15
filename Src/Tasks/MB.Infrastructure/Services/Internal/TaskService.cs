@@ -144,6 +144,11 @@ namespace MB.Infrastructure.Services.Internal
                     await entry.Reference(e => e.Project).LoadAsync();
                     await entry.Reference(e => e.Priority).LoadAsync();
                     await entry.Reference(e => e.Parent).LoadAsync();
+                    var entryProject = _unitOfWork.Entry(newTask.Project);
+                    if (entryProject != null)
+                    {
+                        await entryProject.Reference(e => e.Parent).LoadAsync();
+                    }
                 }
 
                 await transaction.CommitAsync();

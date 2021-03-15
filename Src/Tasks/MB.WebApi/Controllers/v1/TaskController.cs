@@ -16,6 +16,7 @@ using MB.Core.Domain.DbEntities;
 using Microsoft.AspNetCore.SignalR;
 using MB.WebApi.Hubs.v1;
 using MB.Core.Application.Interfaces.Misc;
+using MB.Core.Application.Models.Project;
 
 namespace MB.WebApi.Controllers.v1
 {
@@ -24,10 +25,14 @@ namespace MB.WebApi.Controllers.v1
     public class TaskController : BaseController
     {
         private readonly ITaskService _taskService;
+        private readonly IProjectService _projectService;
+        private readonly IHubContext<GlobalHub> _hubContext;
 
-        public TaskController(ITaskService taskService, UserManager<ApplicationUser> userManager) : base(userManager)
+        public TaskController(ITaskService taskService, IProjectService projectService, UserManager<ApplicationUser> userManager, IHubContext<GlobalHub> hubContext) : base(userManager)
         {
             _taskService = taskService;
+            _projectService = projectService;
+            _hubContext = hubContext;
         }
 
         [HttpPost("task")]
@@ -54,6 +59,19 @@ namespace MB.WebApi.Controllers.v1
 
                 // Carry on with the business logic
                 TaskResponseModel addedTask = await _taskService.AddNewTask(uid.Value, newTask);
+
+                // Notify parent projects to update
+                if (addedTask.Project != null)
+                {
+                    GetOneProjectModel model = new GetOneProjectModel()
+                    {
+                        ProjectId = addedTask.Project.Parent == null ? addedTask.Project.Id : addedTask.Project.Parent.Id ,
+                        UserId = uid.Value,
+                    };
+                    ProjectResponseModel participatedProject = await _projectService.GetOneProject(model);
+                    await _hubContext.Clients.Group($"Project{participatedProject.Id}Group").SendAsync("project-detail-changed", new { projectDetail = participatedProject });
+                }
+
                 return Ok(new HttpResponse<TaskResponseModel>(true, addedTask, message: "Successfully added task"));
             }
             catch (Exception ex)
