@@ -246,7 +246,7 @@ namespace MB.Infrastructure.Services.Internal
                     await entry.Collection(e => e.ChildrenTasks).LoadAsync();
                     await entry.Reference(e => e.Parent).LoadAsync();
                     List<ProjectResponseModel> childrenProjects = new List<ProjectResponseModel>();
-                    foreach (var child in project.Children.OrderBy(e => e.Id).ToList())
+                    foreach (var child in project.Children.Where(e => !e.Deleted).OrderBy(e => e.Id).ToList())
                     {
                         var entryChildProject = _unitOfWork.Entry(child);
                         await entryChildProject.Collection(e => e.ChildrenTasks).LoadAsync();
@@ -254,7 +254,7 @@ namespace MB.Infrastructure.Services.Internal
                         List<TaskResponseModel> childrenTasksOfChildProject = new List<TaskResponseModel>();
                         if (child.ChildrenTasks != null)
                         {
-                            foreach (var childTasksOfChildProject in child.ChildrenTasks.OrderBy(e => e.Id).ToList())
+                            foreach (var childTasksOfChildProject in child.ChildrenTasks.Where(e => !e.Deleted).OrderBy(e => e.Id).ToList())
                             {
                                 childrenTasksOfChildProject.Add(new TaskResponseModel(childTasksOfChildProject, null));
                             }
@@ -262,7 +262,7 @@ namespace MB.Infrastructure.Services.Internal
                         childrenProjects.Add(new ProjectResponseModel(child, null, null, childrenTasksOfChildProject));
                     }
                     List<TaskResponseModel> childrenTasks = new List<TaskResponseModel>();
-                    foreach (var child in project.ChildrenTasks.OrderBy(e => e.Id).ToList())
+                    foreach (var child in project.ChildrenTasks.Where(e => !e.Deleted).OrderBy(e => e.Id).ToList())
                     {
                         childrenTasks.Add(new TaskResponseModel(child, null));
                     }
@@ -404,7 +404,7 @@ namespace MB.Infrastructure.Services.Internal
                 await entry.Collection(e => e.ChildrenTasks).LoadAsync();
                 await entry.Reference(e => e.Parent).LoadAsync();
                 List<ProjectResponseModel> childrenProjects = new List<ProjectResponseModel>();
-                foreach (var child in operatedProject.Children.OrderBy(e => e.Id).ToList())
+                foreach (var child in operatedProject.Children.Where(e => !e.Deleted).OrderBy(e => e.Id).ToList())
                 {
                     var entryChildProject = _unitOfWork.Entry(child);
                     await entryChildProject.Collection(e => e.ChildrenTasks).LoadAsync();
@@ -412,7 +412,7 @@ namespace MB.Infrastructure.Services.Internal
                     List<TaskResponseModel> childrenTasksOfChildProject = new List<TaskResponseModel>();
                     if (child.ChildrenTasks != null)
                     {
-                        foreach (var childTasksOfChildProject in child.ChildrenTasks.OrderBy(e => e.Id).ToList())
+                        foreach (var childTasksOfChildProject in child.ChildrenTasks.Where(e => !e.Deleted).OrderBy(e => e.Id).ToList())
                         {
                             childrenTasksOfChildProject.Add(new TaskResponseModel(childTasksOfChildProject, null));
                         }
@@ -420,7 +420,7 @@ namespace MB.Infrastructure.Services.Internal
                     childrenProjects.Add(new ProjectResponseModel(child, null, null, childrenTasksOfChildProject));
                 }
                 List<TaskResponseModel> childrenTasks = new List<TaskResponseModel>();
-                foreach (var child in operatedProject.ChildrenTasks.OrderBy(e => e.Id).ToList())
+                foreach (var child in operatedProject.ChildrenTasks.Where(e => !e.Deleted).OrderBy(e => e.Id).ToList())
                 {
                     childrenTasks.Add(new TaskResponseModel(child, null));
                 }
@@ -526,12 +526,12 @@ namespace MB.Infrastructure.Services.Internal
                 await entry.Collection(e => e.ChildrenTasks).LoadAsync();
                 await entry.Reference(e => e.Parent).LoadAsync();
                 List<ProjectResponseModel> childrenProjects = new List<ProjectResponseModel>();
-                foreach (var child in operatedProject.Children.OrderBy(e => e.Id).ToList())
+                foreach (var child in operatedProject.Children.Where(e => !e.Deleted).OrderBy(e => e.Id).ToList())
                 {
                     childrenProjects.Add(new ProjectResponseModel(child, null, null, null));
                 }
                 List<TaskResponseModel> childrenTasks = new List<TaskResponseModel>();
-                foreach (var child in operatedProject.ChildrenTasks.OrderBy(e => e.Id).ToList())
+                foreach (var child in operatedProject.ChildrenTasks.Where(e => !e.Deleted).OrderBy(e => e.Id).ToList())
                 {
                     childrenTasks.Add(new TaskResponseModel(child, null));
                 }
