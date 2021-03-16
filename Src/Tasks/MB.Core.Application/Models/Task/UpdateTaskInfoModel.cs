@@ -14,6 +14,7 @@ namespace MB.Core.Application.Models.Task
         public long? AssignedBy { get; set; }
         public long? AssignedFor { get; set; }
         public bool? MakeParentless { get; set; }
+        public bool? IsTaskDone { get; set; }
 
         /// <summary>
         /// Group "I haven't implemented these yet"

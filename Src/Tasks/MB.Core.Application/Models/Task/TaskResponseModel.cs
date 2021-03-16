@@ -19,6 +19,7 @@ namespace MB.Core.Application.Models.Task
             TaskPriority = coreTask.Priority;
             Deleted = coreTask.Deleted;
             UpdatedDate = coreTask.UpdatedDate;
+            IsDone = coreTask.IsDone;
             if (coreTask.Project != null)
             {
                 Project = new ProjectResponseModel(coreTask.Project, null, null, null);
@@ -63,6 +64,7 @@ namespace MB.Core.Application.Models.Task
         public IEnumerable<TaskResponseModel> Children { get; set; }
         public DateTime? ReminderSchedule { get; set; }
         public bool Reminder { get; set; }
+        public bool IsDone { get; set; }
         public UserDTO AssignedBy { get; set; }
         public UserDTO AssignedFor { get; set; }
         public UserDTO CreatedBy { get; set; }

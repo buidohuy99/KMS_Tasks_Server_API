@@ -85,7 +85,24 @@ namespace MB.WebApi.Controllers.v1
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public IActionResult CheckToken()
         {
-            return Ok(new HttpResponse<string>(true, null, "Your token is valid", null));
+            //Check validity of the token
+            var claimsManager = HttpContext.User;
+            long? uid;
+            try
+            {
+                uid = GetUserId(claimsManager);
+            }
+            catch (Exception e)
+            {
+                return Unauthorized(e.Message);
+            }
+
+            if (!uid.HasValue)
+            {
+                return Unauthorized("Unauthorized individuals cannot access this route");
+            }
+
+            return Ok(new HttpResponse<long>(true, uid.Value, "Your token is valid", null));
         }
     }
 }

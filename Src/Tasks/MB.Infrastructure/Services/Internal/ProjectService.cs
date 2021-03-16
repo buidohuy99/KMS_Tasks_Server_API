@@ -256,6 +256,12 @@ namespace MB.Infrastructure.Services.Internal
                         {
                             foreach (var childTasksOfChildProject in child.ChildrenTasks.Where(e => !e.Deleted).OrderBy(e => e.Id).ToList())
                             {
+                                var entryTask = _unitOfWork.Entry(childTasksOfChildProject);
+                                if (entryTask != null)
+                                {
+                                    await entryTask.Reference(e => e.AssignedByUser).LoadAsync();
+                                    await entryTask.Reference(e => e.AssignedForUser).LoadAsync();
+                                }
                                 childrenTasksOfChildProject.Add(new TaskResponseModel(childTasksOfChildProject, null));
                             }
                         }
@@ -264,6 +270,12 @@ namespace MB.Infrastructure.Services.Internal
                     List<TaskResponseModel> childrenTasks = new List<TaskResponseModel>();
                     foreach (var child in project.ChildrenTasks.Where(e => !e.Deleted).OrderBy(e => e.Id).ToList())
                     {
+                        var entryTask = _unitOfWork.Entry(child);
+                        if (entryTask != null)
+                        {
+                            await entryTask.Reference(e => e.AssignedByUser).LoadAsync();
+                            await entryTask.Reference(e => e.AssignedForUser).LoadAsync();
+                        }
                         childrenTasks.Add(new TaskResponseModel(child, null));
                     }
                     

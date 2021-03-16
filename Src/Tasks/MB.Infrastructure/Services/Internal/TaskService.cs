@@ -132,6 +132,7 @@ namespace MB.Infrastructure.Services.Internal
                     CreatedDate = insertTime,
                     UpdatedBy = validUser.UserId,
                     UpdatedDate = insertTime,
+                    IsDone = false,
                     Deleted = false,
                 };  
                 await _unitOfWork.Repository<Tasks>().InsertAsync(newTask);
@@ -491,6 +492,13 @@ namespace MB.Infrastructure.Services.Internal
                     isUpdated = true;
                 }
 
+                // Update task done or not done state
+                if (model.IsTaskDone != null && model.IsTaskDone.Value != operatedTask.IsDone)
+                {
+                    operatedTask.IsDone = model.IsTaskDone.Value;
+                    isUpdated = true;
+                }
+
                 // If there is any update, we update the object
                 if (isUpdated)
                 {
@@ -507,7 +515,12 @@ namespace MB.Infrastructure.Services.Internal
                     await entry.Reference(e => e.Project).LoadAsync();
                     await entry.Reference(e => e.Priority).LoadAsync();
                     await entry.Reference(e => e.Parent).LoadAsync();
-                    await entry.Collection(e => e.Children).LoadAsync();    
+                    await entry.Collection(e => e.Children).LoadAsync();
+                    var entryProject = _unitOfWork.Entry(operatedTask.Project);
+                    if (entryProject != null)
+                    {
+                        await entryProject.Reference(e => e.Parent).LoadAsync();
+                    }
                 }
 
                 List<TaskResponseModel> children = new List<TaskResponseModel>();
@@ -622,6 +635,11 @@ namespace MB.Infrastructure.Services.Internal
                     await entry.Reference(e => e.Priority).LoadAsync();
                     await entry.Reference(e => e.Parent).LoadAsync();
                     await entry.Collection(e => e.Children).LoadAsync();
+                    var entryProject = _unitOfWork.Entry(operatedTask.Project);
+                    if (entryProject != null)
+                    {
+                        await entryProject.Reference(e => e.Parent).LoadAsync();
+                    }
                 }
 
                 List<TaskResponseModel> children = new List<TaskResponseModel>();

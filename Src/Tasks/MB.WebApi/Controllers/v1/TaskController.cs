@@ -214,6 +214,18 @@ namespace MB.WebApi.Controllers.v1
                 // If passes all tests, then we submit it to the service layer
                 // Carry on with the business logic
                 TaskResponseModel updatedTask = await _taskService.UpdateTaskInfo(taskId, uid.Value, model);
+
+                // Notify parent projects to update
+                if (updatedTask.Project != null)
+                {
+                    GetOneProjectModel getOneProjectModel = new GetOneProjectModel()
+                    {
+                        ProjectId = updatedTask.Project.Parent == null ? updatedTask.Project.Id : updatedTask.Project.Parent.Id,
+                        UserId = uid.Value,
+                    };
+                    ProjectResponseModel participatedProject = await _projectService.GetOneProject(getOneProjectModel);
+                    await _hubContext.Clients.Group($"Project{participatedProject.Id}Group").SendAsync("project-detail-changed", new { projectDetail = participatedProject });
+                }
                 return Ok(new HttpResponse<TaskResponseModel>(true, updatedTask, message: "Successfully patched specified task of user"));
             }
             catch (Exception ex)

@@ -22,6 +22,7 @@ namespace MB.Core.Domain.DbEntities
         public long? AssignedFor { get; set; }
         public long? CreatedBy { get; set; }
         public long? UpdatedBy { get; set; }
+        public bool IsDone { get; set; }
 
         public virtual Tasks Parent { get; set; }
         public virtual IEnumerable<Tasks> Children { get; set; }
