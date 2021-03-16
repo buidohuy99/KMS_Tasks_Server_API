@@ -9,6 +9,14 @@ using MB.Core.Application;
 using MB.WebApi.Hubs.v1;
 using MB.WebApi.Utils;
 using MB.Core.Application.Interfaces.Misc;
+using MB.Infrastructure.Contexts;
+using Microsoft.EntityFrameworkCore;
+using MB.Core.Domain.DbEntities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
+using System;
+using MB.Infrastructure.Services.ThirdParty;
 
 namespace MB.WebApi
 {
@@ -50,11 +58,26 @@ namespace MB.WebApi
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ApplicationDbContext dbContext, IServiceProvider serviceProvider)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+            }
+
+            dbContext.Database.Migrate();
+
+            var logger = NLoggerService.GetLogger();
+            try
+            {
+                var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+                var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+                //Seed Default Users
+                dbContext.SeedDefaultUserAsync(userManager, roleManager).Wait();
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "An error occurred when seeding the DB.");
             }
 
             app.UseCors(builder => builder.WithOrigins(new string[] { "http://localhost:8080", "http://localhost:4000", "http://localhost:5002" }).AllowAnyMethod().AllowAnyHeader().AllowCredentials());

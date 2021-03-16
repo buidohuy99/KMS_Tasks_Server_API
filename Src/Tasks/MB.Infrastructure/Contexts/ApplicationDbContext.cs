@@ -1,5 +1,6 @@
 ﻿using MB.Core.Domain.Constants;
 using MB.Core.Domain.DbEntities;
+using MB.Infrastructure.Services.ThirdParty;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -20,8 +21,10 @@ namespace MB.Infrastructure.Contexts
         {
         }
 
-        public static async Task SeedDefaultUserAsync(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+        public async Task SeedDefaultUserAsync(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
         {
+            var logger = NLoggerService.GetLogger();
+
             if (roleManager.Roles.Count() == 0)
             {
                 //Seed Roles
@@ -32,13 +35,14 @@ namespace MB.Infrastructure.Contexts
 
             if (!userManager.Users.Any(u => u.UserName == DefaultUserConstants.DefaultUsername))
             {
+                logger.Info("Seeding admin user...");
                 //Seed Default User
                 var defaultUser = new ApplicationUser
                 {
                     UserName = DefaultUserConstants.DefaultUsername,
-                    FirstName = "Bùi",
-                    MidName = "Phan",
-                    LastName = "Thọ",
+                    FirstName = "Admin",
+                    MidName = "UwU",
+                    LastName = "User",
                     Email = DefaultUserConstants.DefaultEmail,
                     EmailConfirmed = true,
                     PhoneNumber = "0349004909",
@@ -48,6 +52,8 @@ namespace MB.Infrastructure.Contexts
 
                 await userManager.CreateAsync(defaultUser, DefaultUserConstants.DefaultPassword);
                 await userManager.AddToRoleAsync(defaultUser, DefaultUserConstants.DefaultRole.ToString());
+
+                logger.Info("Seeding complete for admin user...");
             }
         }
 
