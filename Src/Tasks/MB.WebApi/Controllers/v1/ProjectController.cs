@@ -228,7 +228,7 @@ namespace MB.WebApi.Controllers.v1
                 //Notify list change for all users participating in the project
                 GetAllParticipationsModel GetParticipationsModel = new GetAllParticipationsModel()
                 {
-                    ProjectId = participatedProject.Id,
+                    ProjectId = participatedProject.Parent == null ? participatedProject.Id : participatedProject.Parent.Id,
                 };
                 GetAllParticipatingUsers_InProject_ResponseModel participatingUsers = (GetAllParticipatingUsers_InProject_ResponseModel)(await _participationService.GetAllParticipations(uid.Value, GetParticipationsModel));
                 foreach(var participant in participatingUsers.Users)
@@ -241,8 +241,15 @@ namespace MB.WebApi.Controllers.v1
                     
                     await _hubContext.Clients.Group($"User{participant.UserDetail.Id}Group").SendAsync("projects-list-changed", new { projects = resulting.Projects });
                 }
+                // Get project detail
+                GetOneProjectModel projectDetailModel = new GetOneProjectModel()
+                {
+                    ProjectId = GetParticipationsModel.ProjectId,
+                    UserId = uid.Value,
+                };
+                ProjectResponseModel notifiedProject = await _projectService.GetOneProject(projectDetailModel);
                 //Notify people in details page
-                await _hubContext.Clients.Group($"Project{participatedProject.Id}Group").SendAsync("project-detail-changed", new { projectDetail = participatedProject });          
+                await _hubContext.Clients.Group($"Project{notifiedProject.Id}Group").SendAsync("project-detail-changed", new { projectDetail = notifiedProject });          
                 return Ok(new HttpResponse<ProjectResponseModel>(true, participatedProject, message: "Successfully patched specified project of user"));
             }
             catch (Exception ex)
@@ -290,7 +297,7 @@ namespace MB.WebApi.Controllers.v1
                 //Notify list change for all users participating in the project
                 GetAllParticipationsModel GetParticipationsModel = new GetAllParticipationsModel()
                 {
-                    ProjectId = participatedProject.Id,
+                    ProjectId = participatedProject.Parent == null ? participatedProject.Id : participatedProject.Parent.Id,
                 };
                 GetAllParticipatingUsers_InProject_ResponseModel participatingUsers = (GetAllParticipatingUsers_InProject_ResponseModel)(await _participationService.GetAllParticipations(uid.Value, GetParticipationsModel));
                 foreach (var participant in participatingUsers.Users)
@@ -303,8 +310,15 @@ namespace MB.WebApi.Controllers.v1
 
                     await _hubContext.Clients.Group($"User{participant.UserDetail.Id}Group").SendAsync("projects-list-changed", new { projects = resulting.Projects });
                 }
+                // Get project detail
+                GetOneProjectModel projectDetailModel = new GetOneProjectModel()
+                {
+                    ProjectId = GetParticipationsModel.ProjectId,
+                    UserId = uid.Value,
+                };
+                ProjectResponseModel notifiedProject = await _projectService.GetOneProject(projectDetailModel);
                 //Notify people in details page
-                await _hubContext.Clients.Group($"Project{participatedProject.Id}Group").SendAsync("project-detail-changed", new { projectDetail = participatedProject });
+                await _hubContext.Clients.Group($"Project{notifiedProject.Id}Group").SendAsync("project-detail-changed", new { projectDetail = notifiedProject });
                 return Ok(new HttpResponse<ProjectResponseModel>(true, participatedProject, message: "Successfully deleted specified project of user"));
             }
             catch (Exception ex)

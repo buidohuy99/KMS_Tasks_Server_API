@@ -24,10 +24,12 @@ namespace MB.WebApi.Controllers.v1
     public class UserController : BaseController
     {
         private readonly IUserService _userService;
+        private readonly IHubContext<GlobalHub> _hubContext;
 
-        public UserController(IUserService userService, UserManager<ApplicationUser> userManager) : base(userManager)
+        public UserController(IUserService userService, UserManager<ApplicationUser> userManager, IHubContext<GlobalHub> hubContext) : base(userManager)
         {
             _userService = userService;
+            _hubContext = hubContext;
         }
 
         [HttpGet("profile")]
@@ -143,6 +145,9 @@ namespace MB.WebApi.Controllers.v1
                 // If passes all tests, then we submit it to the service layer
                 // Carry on with the business logic
                 UserResponseModel updatedUser = await _userService.UpdateUserInfo(uid.Value, model);
+
+                await _hubContext.Clients.Group($"User{updatedUser.Id}Group").SendAsync("profile-info-changed", updatedUser);
+
                 return Ok(new HttpResponse<UserResponseModel>(true, updatedUser, message: "Successfully patched infos of user"));
             }
             catch (Exception ex)

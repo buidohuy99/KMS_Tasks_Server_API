@@ -332,7 +332,7 @@ namespace MB.Infrastructure.Services.Internal
 
                 // Get if user have the authorization to change project info
                 var getUserProject = from userProject in _unitOfWork.Repository<UserProjects>().GetDbset()
-                                     where userProject.UserId == validUser.UserId && userProject.ProjectId == operatedProject.Id
+                                     where userProject.UserId == validUser.UserId && (userProject.ProjectId == operatedProject.Id || userProject.ProjectId == operatedProject.ParentId)
                                      select userProject;
                 if (getUserProject == null || getUserProject.Count() < 1)
                 {
@@ -369,7 +369,7 @@ namespace MB.Infrastructure.Services.Internal
 
                     // Get if user have the authorization to change project info
                     var checkUserProject = from userProject in _unitOfWork.Repository<UserProjects>().GetDbset()
-                                         where userProject.UserId == validUser.UserId && userProject.ProjectId == newParentProject.Id
+                                         where userProject.UserId == validUser.UserId && (userProject.ProjectId == newParentProject.Id || userProject.ProjectId == newParentProject.ParentId)
                                          select userProject;
                     if (checkUserProject == null || checkUserProject.Count() < 1)
                     {
@@ -484,7 +484,7 @@ namespace MB.Infrastructure.Services.Internal
 
                 // Get if user have the authorization to change project info
                 var getUserProject = from userProject in _unitOfWork.Repository<UserProjects>().GetDbset()
-                                     where userProject.UserId == validUser.UserId && userProject.ProjectId == operatedProject.Id
+                                     where userProject.UserId == validUser.UserId && (userProject.ProjectId == operatedProject.Id || userProject.ProjectId == operatedProject.ParentId)
                                      select userProject;
                 if (getUserProject == null || getUserProject.Count() < 1)
                 {

@@ -270,6 +270,19 @@ namespace MB.WebApi.Controllers.v1
                 // If passes all tests, then we submit it to the service layer
                 // Carry on with the business logic
                 TaskResponseModel participatedTask = await _taskService.SoftDeleteExistingTask(taskId, uid.Value);
+
+                // Notify parent projects to update
+                if (participatedTask.Project != null)
+                {
+                    GetOneProjectModel getOneProjectModel = new GetOneProjectModel()
+                    {
+                        ProjectId = participatedTask.Project.Parent == null ? participatedTask.Project.Id : participatedTask.Project.Parent.Id,
+                        UserId = uid.Value,
+                    };
+                    ProjectResponseModel participatedProject = await _projectService.GetOneProject(getOneProjectModel);
+                    await _hubContext.Clients.Group($"Project{participatedProject.Id}Group").SendAsync("project-detail-changed", new { projectDetail = participatedProject });
+                }
+
                 return Ok(new HttpResponse<TaskResponseModel>(true, participatedTask, message: "Successfully deleted specified task of user"));
             }
             catch (Exception ex)
