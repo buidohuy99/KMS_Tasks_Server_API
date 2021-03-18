@@ -22,6 +22,7 @@ namespace MB.Core.Application.DTOs
             Status = user.Status;
             CreatedDate = user.CreatedDate;
             UpdatedDate = user.UpdatedDate;
+            Phone = user.PhoneNumber;
         }
 
         public long Id { get; set; }
@@ -33,6 +34,7 @@ namespace MB.Core.Application.DTOs
         public string LastName { get; set; }
         public string AvatarUrl { get; set; }
         public string Address { get; set; }
+        public string Phone { get; set; }
         public string Gender { get; set; }
         public DateTime? DateOfBirth { get; set; }
         public byte Status { get; set; }

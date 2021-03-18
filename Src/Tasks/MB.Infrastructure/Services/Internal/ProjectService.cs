@@ -222,7 +222,7 @@ namespace MB.Infrastructure.Services.Internal
 
                 // Get the only one project participated 
                 var resultProject = _unitOfWork.Repository<Project>().GetDbset()
-                    .Where(project => participation.Any(p => p.ProjectId == project.Id && project.Deleted == false));
+                    .Where(project => participation.Any(p => p.ProjectId == project.Id));
                 // If cannot find the project from the infos provided, return a service exception
                 if (resultProject == null || resultProject.Count() < 1)
                 {
